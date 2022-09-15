@@ -1,0 +1,30 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Playlist Detail{% endblock %}
+{% block content %}
+
+    {% if playlist_name %}
+        <h2>Playlist : {{ playlist_name.first.playlist.playlist_name }}</h2>
+
+
+        {% for data in playlist_name %}
+        <p>
+            <div>
+                <img src="/media/{{ data.song.song_thumbnail }}" alt="{{ data.playlist_name }}" width="80" height="80"><br>
+                <h3>{{ data.song.song_name }}</h3>
+                <h4>Artsts: </h4>
+                {% for artist in data.song.song_user.all %}
+                    <p>{{ artist.username }}</p>
+                {% endfor %}
+                <audio controls>
+                    <source src="/media/{{ data.song.song_file }}" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+        </p>
+        {% endfor %}
+    {% else %}
+        <h4>There are no songs in the playlist.</h4>
+    {% endif %}
+
+{% endblock %}

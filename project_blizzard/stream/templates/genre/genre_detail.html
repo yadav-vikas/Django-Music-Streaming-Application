@@ -1,0 +1,55 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Genre Detail{% endblock %}
+{% block content %}
+
+    {% if genre_songs %}
+
+        {% if genre_songs.songs %}
+            <h2>Genre : {{ genre_songs.songs.first.genre.genre_name }}</h2>
+            {% for data in genre_songs.songs %}
+                <p>
+                    <div>
+                        <img src="/media/{{ data.song.song_thumbnail }}" alt="{{ data.genre_songs }}" width="80" height="80"><br>
+                        <h3>{{ data.song.song_name }}</h3>
+                        <h4>Artsts: </h4>
+                        {% for artist in data.song.song_user.all %}
+                            <p>{{ artist.username }}</p>
+                        {% endfor %}
+                        <audio controls>
+                            <source src="/media/{{ data.song.song_file }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </p>
+            {% endfor %}
+            {% else %}
+                <h3> There are no songs in this category.</h3>
+        {% endif %}
+
+        {% if genre_songs.playlists %}
+            <h2> Playlists with {{ genre_songs.playlists.first.genre.genre_name }}</h2>
+            <ul>
+                {% for playlist in genre_songs.playlists %}
+                <li>
+                    <div class="card-group">
+                        <div class="card"><a href="{% url 'playlist_detail' playlist.playlist.slug %}">
+                        <img class="card-img-top" src="{{ playlist.playlist.playlist_thumbnail.url }}" width="140", height="180"></a>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title" >{{ playlist.playlist.playlist_name }}</h5>
+                        </div>
+                    </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <h3> There are no playlists in this category.</h3>
+        {% endif %}
+
+    {% else %}
+        <h2> There is no data for requested genre.</h2>
+    {% endif %}
+
+{% endblock %}

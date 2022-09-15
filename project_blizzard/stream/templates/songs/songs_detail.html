@@ -1,0 +1,21 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Song Detail{% endblock %}
+{% block content %}
+<h3>
+    {{ song_name.song_name }}
+    {% for artist in  song_name.song_user.all %}
+        <h5>Artist: {{ artist }}</h5>
+        {% endfor %}
+    </p>
+</h3>
+<div>
+    <audio controls>
+        <!-- <source src="horse.ogg" type="audio/ogg"> -->
+        <source src="/media/{{ song_name.song_file }}" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <img src="/media/{{ song_name.song_thumbnail }}" alt="{{ song_name.song_name }}">
+    </div>
+
+{% endblock %}  

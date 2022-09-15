@@ -1,0 +1,23 @@
+{% extends "accounts/base.html" %}
+
+{% block title %}Playlist List{% endblock %}
+{% block content %}
+
+<ul>
+    {% for mood in mood_list %}
+    <li>
+        <div class="card-group">
+            <div class="card"><a href="{% url 'mood_detail' mood.slug %}">
+            <img class="card-img-top" src="{{ mood.mood_thumbnail.url }}" width="140", height="180"></a>
+            <div class="card-body">
+                <h5 class="card-title" >{{ mood.mood_name }}</h5>
+            </div>
+        </div>
+
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
+
+{% endblock %}

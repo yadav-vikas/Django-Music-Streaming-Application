@@ -1,0 +1,37 @@
+In [72]: s2 = Songs.objects.prefetch_related('song_user__song_user').filter(id=1)
+
+In [73]: print(s2)
+<QuerySet [<Songs: Songs object (1)>]>
+
+In [74]: for i in s2[0]:
+    ...:     print(i)
+    ...:
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+Input In [74], in <cell line: 1>()
+----> 1 for i in s2[0]:
+      2     print(i)
+
+TypeError: 'Songs' object is not iterable
+
+In [75]: s2.song_name
+---------------------------------------------------------------------------
+AttributeError                            Traceback (most recent call last)
+Input In [75], in <cell line: 1>()
+----> 1 s2.song_name
+
+AttributeError: 'QuerySet' object has no attribute 'song_name'
+
+In [76]: s2[0].song_name
+Out[76]: 'sample'
+
+In [77]: s2[0].song_user
+Out[77]: <django.db.models.fields.related_descriptors.create_forward_many_to_many_manager.<locals>.ManyRelatedManager at 0x1d38e2d2d30>
+
+In [78]: s2[0].created_by
+Out[78]: <Account: vikas@gmail.com>
+
+In [79]: s2[0].song_user.all()
+Out[79]: <QuerySet [<Account: vikas@gmail.com>, <Account: sgawade@sapat.com>]>
+
+In [80]:
