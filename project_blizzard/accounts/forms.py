@@ -40,6 +40,15 @@ class ProfileUpdateForm(forms.ModelForm):
 
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=63)
-    password = forms.CharField(max_length=63, widget=forms.PasswordInput)
+    password = forms.CharField(max_length=255, widget=forms.PasswordInput)
 
+    # class Meta:
+    #     model = Account
+    #     fields = ['username', 'password']
 
+    # def save(self, commit=True):
+    #     user = super(LoginForm, self).save(commit=False)
+    #     user.set_password(user.password) # set password properly before commit
+    #     if commit:
+    #         user.save()
+    #     return user

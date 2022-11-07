@@ -18,6 +18,8 @@ from .backends import ExtendedUserModelBackend
 from .forms import CustomUserCreationForm, LoginForm
 from .token import account_activation_token
 
+from django.core.exceptions import ObjectDoesNotExist
+
 
 # def logout_request(request):
 # 	logout(request)
@@ -34,27 +36,67 @@ class SignUpView(CreateView):
     template_name = "accounts/signup.html"
 
 
+# def login_request(request):
+#     form = LoginForm(request.POST)
+#     if form.is_valid():
+#         username = form.cleaned_data.get("username")
+#         password = form.cleaned_data.get("password")
+#         try:
+#             user = authenticate(username=username, password=password)
+#         except ObjectDoesNotExist:
+#             return messages.info(request, f"There is no user registered with{username}. Please Sign Up!.")
+
+#         # print("username: ", username, "passowrd: ", password)
+#         # print("user from authenticate :",authenticate(username=username, password=password))
+#         if user is not None:
+#             user.backend = "accounts.backends.ExtendedUserModelBackend"
+#             login(request, user)
+#             messages.info(request, f"Your are now logged in as {username}.")
+#             if request.GET.__contains__('next'):
+#                 return redirect(request.GET.__getitem__('next'))
+#             # print("next url :", request.GET.__getitem__('next'))
+#             return redirect("profile")
+#         else:
+#             # messages.error(request, "Please Verify your email to login.")
+#             return HttpResponse("Please Verify your email to login.")
+#     form = LoginForm()
+#     return render(request, template_name="accounts/login.html", context={"form": form})
+
 def login_request(request):
-    form = LoginForm(request.POST)
-    if form.is_valid():
-        username = form.cleaned_data.get("username")
-        password = form.cleaned_data.get("password")
-        user = authenticate(username=username, password=password)
-        # print("username: ", username, "passowrd: ", password)
-        # print("user from authenticate :",authenticate(username=username, password=password))
-        if user is not None:
-            user.backend = "accounts.backends.ExtendedUserModelBackend"
-            login(request, user)
-            messages.info(request, f"Your are now logged in as {username}.")
-            if request.GET.__contains__('next'):
-                return redirect(request.GET.__getitem__('next'))
-            # print("next url :", request.GET.__getitem__('next'))
-            return redirect("profile")
-        else:
-            # messages.error(request, "Please Verify your email to login.")
-            return HttpResponse("Please Verify your email to login.")
-    form = LoginForm()
+    if request.method == "POST":
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            # user = form.save(commit=False)
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+            # try:
+            #     user = ExtendedUserModelBackend.authenticate(username=username, password=password)
+            # except Exception as e:
+            #     print("Exception ->>> ",e)
+            #     messages.warning(request, f"We do not have user registered with {username}, please Sign Up!.")
+            #     reverse('signup') # take him to sign up page
+            user = ExtendedUserModelBackend.authenticate(request, username=username, password=password)
+            print(f"user == {user}")
+            if user is not None:
+                user.backend = "accounts.backends.ExtendedUserModelBackend"
+                if ExtendedUserModelBackend.user_can_authenticate(request, username=username, password=password):
+                    login(request, user)
+                    messages.info(request, f"Your are now logged in as {username}.")
+                    if request.GET.__contains__('next'):
+                        print("next url :", request.GET.__getitem__('next'))
+                        return redirect(request.GET.__getitem__('next'))
+                    return redirect("profile")
+                else:
+                    messages.warning(request, f"Please correct your username and password.")
+                    reverse('login') # take him to sign up page
+            else:
+                # return HttpResponse("Please check your ID and password and try again!!.")
+                messages.warning(request, f"We do not have user registered with {username}, please Sign Up!.")
+                reverse('signup') # take him to sign up page
+    else:
+        form = LoginForm()
     return render(request, template_name="accounts/login.html", context={"form": form})
+
 
 def register(request):
     form = CustomUserCreationForm(request.POST or None)
