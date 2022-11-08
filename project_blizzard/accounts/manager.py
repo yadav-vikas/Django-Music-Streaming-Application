@@ -1,19 +1,21 @@
 from django.contrib.auth.models import BaseUserManager
 
+from django.contrib.auth import get_user_model
+
 
 class CustomAccountManager(BaseUserManager):
 
-    def create_user(self, email, username, password, **other_fields):
+    def create_user(self, email, username, password=None, **other_fields):
 
         if not email:
             raise ValueError("You must specify valid Email!")
         if not username:
             raise ValueError("You must specify valid username!")
-        elif username and not username.isspace(): # code
-            print("the username is valid.")
-        else: 
-            username = email
-            print("using username as email.")
+        # elif username and not username.isspace(): # code
+        #     print("the username is valid.")
+        # else: 
+        #     username = email
+        #     print("using username as email.")
 
         email = self.normalize_email(email)
         user = self.model(email=email,username=username, **other_fields)

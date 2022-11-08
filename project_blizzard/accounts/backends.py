@@ -6,6 +6,7 @@ from django.http import HttpResponse
 
 from .manager import CustomAccountManager
 from django.contrib.auth.hashers import make_password
+from django.shortcuts import reverse
 
 UserModel = get_user_model()
 
@@ -44,19 +45,14 @@ class ExtendedUserModelBackend(ModelBackend):
     #         return user
     #     return users
     def authenticate(self, username=None, password=None):
-        if '@' in username:
-            kwargs = {'email': username.lower()}
-        else:
-            kwargs = {'username': username.lower()}
         try:
-            user = UserModel.objects.get(**kwargs)
-            if user.check_password(password) : # and self.user_can_authenticate(user)
+            user = UserModel._default_manager.get((Q(**{UserModel.USERNAME_FIELD: username}) | (Q(email__exact=username))))
+            print("user------------------>>> ",user)
+            if user.check_password(password):
                 return user
-        except UserModel.DoesNotExist:
             return None
-        except Exception as e:
-            print(f"Exception - {e}")
-            # return UserModel.objects.none()
+        except UserModel.DoesNotExist:
+            print("the user does not exist")
             return None
 
     def get_user(self, user_id=None):
@@ -64,22 +60,22 @@ class ExtendedUserModelBackend(ModelBackend):
         try:
             return UserModel.objects.get(pk=user_id)
         except UserModel.DoesNotExist:
-            return UserModel.objects.none()
+            return None
 
-    # def user_can_authenticate(self, username=None, password=None):
-    #     """
-    #     Returns whether the user is allowed to authenticate. 
-    #     To match the behavior of `AuthenticationForm` which prohibits inactive users from logging in, 
-    #     this method returns `False` for users with `is_active=False`. 
-    #     Custom user models that don't have an `is_active` field are allowed.
-    #     """
-    #     if '@' in username:
-    #         kwargs = {'email': username.lower()}
-    #     else:
-    #         kwargs = {'username': username.lower()}
-    #     try:
-    #         user = UserModel.objects.get(**kwargs)
-    #         print(f"user-is_active = {user.is_active}")
-    #         return user.is_active
-    #     except UserModel.DoesNotExist:
-    #         return None
+    def user_can_authenticate(self, username=None, password=None):
+        """
+        Returns whether the user is allowed to authenticate. 
+        To match the behavior of `AuthenticationForm` which prohibits inactive users from logging in, 
+        this method returns `False` for users with `is_active=False`. 
+        Custom user models that don't have an `is_active` field are allowed.
+        """
+        if '@' in username:
+            kwargs = {'email': username.lower()}
+        else:
+            kwargs = {'username': username.lower()}
+        try:
+            user = UserModel.objects.get(**kwargs)
+            print(f"user-is_active = {user.is_active}")
+            return user.is_active
+        except UserModel.DoesNotExist:
+            return None
