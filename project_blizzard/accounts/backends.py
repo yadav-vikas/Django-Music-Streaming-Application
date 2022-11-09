@@ -50,10 +50,12 @@ class ExtendedUserModelBackend(ModelBackend):
             print("user------------------>>> ",user)
             if user.check_password(password):
                 return user
-            return None
+            # return None
         except UserModel.DoesNotExist:
             print("the user does not exist")
-            return None
+            user = UserModel.objects.none()
+            return user
+        return user
 
     def get_user(self, user_id=None):
         # UserModel = get_user_model()

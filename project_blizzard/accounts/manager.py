@@ -21,11 +21,11 @@ class CustomAccountManager(BaseUserManager):
         user = self.model(email=email,username=username, **other_fields)
         user.set_password(password)
         user.is_active = False
-        user.save()
+        user.save(using=self._db)
         return user
 
     
-    def create_superuser(self, email, username, password, **other_fields):
+    def create_superuser(self, email, username, password=None, **other_fields):
         other_fields.setdefault('is_staff',True)
         other_fields.setdefault('is_superuser',True)
         other_fields.setdefault('is_active',True)
@@ -37,9 +37,10 @@ class CustomAccountManager(BaseUserManager):
 
         # return self.create_user(username, email, password, **other_fields)
         email = self.normalize_email(email)
-        user = self.model(email=email,username=username, **other_fields)
+        user = self.model(email=email, username=username, password=password, **other_fields)
         user.set_password(password)
-        user.is_active = True
+        # user.is_active = True
         # user.EmailVerification.verified = True
-        user.save()
+        user.is_admin = True
+        user.save(using=self._db)
         return user
