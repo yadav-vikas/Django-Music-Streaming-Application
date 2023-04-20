@@ -11,7 +11,7 @@ from django.conf import settings
 
 
 class Account(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(unique=True)
+    email = models.EmailField(max_length=255, unique=True, null=True, blank=True)
     username = models.CharField(max_length=255, unique=True, null=True, blank=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)

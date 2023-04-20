@@ -15,9 +15,11 @@ from django.contrib.auth import get_user_model
 
 from .models import Account, EmailVerification, Profile
 from .backends import ExtendedUserModelBackend
-from .forms import CustomUserCreationForm, LoginForm
+from .forms import CustomUserCreationForm, LoginForm, RegisterForm
 from .token import account_activation_token
 
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.hashers import make_password
 
 # def logout_request(request):
 # 	logout(request)
@@ -34,40 +36,77 @@ class SignUpView(CreateView):
     template_name = "accounts/signup.html"
 
 
+# def login_request(request):
+#     form = LoginForm(request.POST)
+#     if form.is_valid():
+#         username = form.cleaned_data.get("username")
+#         password = form.cleaned_data.get("password")
+#         try:
+#             user = authenticate(username=username, password=password)
+#         except ObjectDoesNotExist:
+#             return messages.info(request, f"There is no user registered with{username}. Please Sign Up!.")
+
+#         # print("username: ", username, "passowrd: ", password)
+#         # print("user from authenticate :",authenticate(username=username, password=password))
+#         if user is not None:
+#             user.backend = "accounts.backends.ExtendedUserModelBackend"
+#             login(request, user)
+#             messages.info(request, f"Your are now logged in as {username}.")
+#             if request.GET.__contains__('next'):
+#                 return redirect(request.GET.__getitem__('next'))
+#             # print("next url :", request.GET.__getitem__('next'))
+#             return redirect("profile")
+#         else:
+#             # messages.error(request, "Please Verify your email to login.")
+#             return HttpResponse("Please Verify your email to login.")
+#     form = LoginForm()
+#     return render(request, template_name="accounts/login.html", context={"form": form})
+
 def login_request(request):
-    form = LoginForm(request.POST)
-    if form.is_valid():
-        username = form.cleaned_data.get("username")
-        password = form.cleaned_data.get("password")
-        user = authenticate(username=username, password=password)
-        # print("username: ", username, "passowrd: ", password)
-        # print("user from authenticate :",authenticate(username=username, password=password))
-        if user is not None:
-            user.backend = "accounts.backends.ExtendedUserModelBackend"
-            login(request, user)
-            messages.info(request, f"Your are now logged in as {username}.")
-            if request.GET.__contains__('next'):
-                return redirect(request.GET.__getitem__('next'))
-            # print("next url :", request.GET.__getitem__('next'))
-            return redirect("profile")
-        else:
-            # messages.error(request, "Please Verify your email to login.")
-            return HttpResponse("Please Verify your email to login.")
-    form = LoginForm()
+    if request.method == "POST":
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            # user = form.save(commit=False)
+            username = form.cleaned_data["username"]
+            password = form.cleaned_data["password"]
+            print(f"username = {username}, password = {password}")
+            user = ExtendedUserModelBackend.authenticate(request, username=username, password=password)
+            print(f"user = {user}")
+            if user:
+                user.backend = "accounts.backends.ExtendedUserModelBackend"
+                try:
+                    EmailVerification.objects.get(user=user, verified=True)
+                    login(request, user)
+                    messages.info(request, f"Your are now logged in as {username}.")
+                    if request.GET.__contains__('next'):
+                        print("next url :", request.GET.__getitem__('next'))
+                        return redirect(request.GET.__getitem__('next'))
+                    return redirect("profile")
+                except EmailVerification.DoesNotExist:
+                    messages.warning(request, "Please Verify your email to proceed further!.")
+                    # return redirect('login') # take him to sign up page
+                # else:
+                #     messages.warning(request, "Please Verify your email to proceed further!.")
+                #     reverse('login') # take him to sign up page
+            else:
+                messages.warning(request, "Please check your username or password!.")
+                reverse('login') # take him to sign up page
+    else:
+        form = LoginForm()
     return render(request, template_name="accounts/login.html", context={"form": form})
 
+
 def register(request):
-    form = CustomUserCreationForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        # form = CustomUserCreationForm(request.POST)
-        print("form data = ",form.cleaned_data.get("username"))
+    if request.method == "POST":
+        form = RegisterForm(request.POST or None)
         if form.is_valid():
-            user = form.save(commit=False)
+            user = form.save()
             print("user :",user)
-            user.is_active = False
+            # user.is_active = False
             user.save()
             current_site = get_current_site(request)
-            # print("current site :", current_site)
+            
+            ###############################################  Mail  ######################################################
             mail_subject = 'Activate your  blizzard account.'
             mail_message = render_to_string('accounts/activate_email.html', {
                 'user': user,
@@ -79,11 +118,14 @@ def register(request):
             email = EmailMessage(mail_subject, mail_message, to=[to_email])
             email.send()
             print("Mail Sent to user ",to_email)
+            ###############################################  Mail  ######################################################
+
             # messages.success(request, "Registration successful.")
             return HttpResponse('Please verify your email to complete the registration.')
         messages.error(request, "Unsuccessfull registration, Invalid information for user.")
         HttpResponse('Please verify your email to .')
-    form = CustomUserCreationForm()
+    else:
+        form = RegisterForm()
     return render(request, template_name='accounts/signup.html', context={"form": form})
 
 def activate(request, uidb64, token):  
@@ -94,9 +136,9 @@ def activate(request, uidb64, token):
     except(TypeError, ValueError, OverflowError, User.DoesNotExist):  
         user = None  
     if user is not None and account_activation_token.check_token(user, token):  
-        user.is_active = True
+        user.is_active = True # changed in manager for now...
         EmailVerification.objects.filter(user=user).update(verified=True)
-        Profile.objects.create(user=user, image='media/default.jpg')
+        Profile.objects.create(user=user, image='default.jpg')
         print("user is activated now.")  
         user.save()  
         return HttpResponse('Thank you for your email confirmation. Now you can login your account.')  
